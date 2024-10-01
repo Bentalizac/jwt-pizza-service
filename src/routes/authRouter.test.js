@@ -19,3 +19,18 @@ test('login', async () => {
   console.log(testUserAuthToken, password)
   expect(loginRes.body.user).toMatchObject(user);
 });
+
+test('logout', async ()=> { //Login the test use, then logout
+  const loginRes = await request(app).put('/api/auth').send(testUser);
+  expect(loginRes.status).toBe(200);
+  expect(loginRes.body.token).toMatch(/^[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*$/);
+
+  const { password, ...user } = { ...testUser, roles: [{ role: 'diner' }] };
+  expect(loginRes.body.user).toMatchObject(user);
+
+  const logoutRes = await request(app).delete('/api/auth').send(testUser)
+
+  expect(logoutRes.status).toBe(200)
+  expect(logoutRes.body.message).toBe('logout successful')
+})
+
