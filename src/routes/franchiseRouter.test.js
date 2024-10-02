@@ -3,6 +3,7 @@ const app = require('../service');
 
 
 const { Role, DB } = require('../database/database.js');
+const testUser = await createAdminUser()
 
 async function clearDB() {
     const connection = await DB.getConnection()
@@ -25,7 +26,7 @@ async function createAdminUser() {
 
 beforeAll(async ()=>{
     await clearDB()
-    testUser = await createAdminUser()
+    //testUser = await createAdminUser()
 })
 
 test('create franchise', async () => {

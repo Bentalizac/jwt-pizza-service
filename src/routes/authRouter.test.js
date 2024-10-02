@@ -4,7 +4,18 @@ const app = require('../service');
 const testUser = { name: 'pizza diner', email: 'reg@test.com', password: 'a' };
 let testUserAuthToken;
 
+async function clearDB() {
+    const connection = await DB.getConnection()
+    //DB.query(connection, "TRUNCATE TABLE * CASCADE")
+    DB.query(connection, 'DROP DATABASE pizza')
+    DB.initializeDatabase()
+}
+
+
 beforeAll(async () => {
+
+  clearDB()
+  
   testUser.email = Math.random().toString(36).substring(2, 12) + '@test.com';
   const registerRes = await request(app).post('/api/auth').send(testUser);
   testUserAuthToken = registerRes.body.token;
