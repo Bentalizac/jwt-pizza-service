@@ -3,7 +3,7 @@ const app = require('../service');
 
 
 const { Role, DB } = require('../database/database.js');
-const testUser = await createAdminUser()
+let testUser =  {}
 
 async function clearDB() {
     const connection = await DB.getConnection()
@@ -14,7 +14,8 @@ async function clearDB() {
 
 function randomName() {
     return Math.random().toString(36).substring(2, 6);
-  }
+  };
+
 async function createAdminUser() {
   let user = { password: 'toomanysecrets', roles: [{ role: Role.Admin }]  }; //roles: [{ role: Role.Admin }] 
   user.name = "adm" + randomName();
@@ -24,9 +25,11 @@ async function createAdminUser() {
   return user;
 }
 
+
+
 beforeAll(async ()=>{
     await clearDB()
-    //testUser = await createAdminUser()
+    testUser = await createAdminUser()
 })
 
 test('create franchise', async () => {
