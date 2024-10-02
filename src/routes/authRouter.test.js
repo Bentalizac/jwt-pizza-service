@@ -21,5 +21,6 @@ test('login', async () => {
   const { password, ...user } = { ...testUser, roles: [{ role: 'diner' }] };
   console.log(testUserAuthToken, password)
   expect(loginRes.body.user).toMatchObject(user);
+
 });
 
