@@ -5,12 +5,12 @@ const app = require('../service');
 const { Role, DB } = require('../database/database.js');
 let testUser =  {}
 
-async function clearDB() {
-    const connection = await DB.getConnection()
+//async function clearDB() {
+//    const connection = await DB.getConnection()
     //DB.query(connection, "TRUNCATE TABLE * CASCADE")
-    DB.query(connection, 'DROP DATABASE pizza')
-    DB.initializeDatabase()
-}
+//    DB.query(connection, 'DROP DATABASE pizza')
+//    DB.initializeDatabase()
+//}
 
 function randomName() {
     return Math.random().toString(36).substring(2, 6);
