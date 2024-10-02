@@ -3,3 +3,6 @@
 config.js
 coverage
 dist
+
+hack.js
+hack.test.js

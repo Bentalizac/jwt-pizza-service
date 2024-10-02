@@ -21,13 +21,22 @@ async function getUserId(user) {
     try {
     const sql = "SELECT id FROM user WHERE email=?"
     let res = await DB.query(connection, sql, [user.email])
-    console.log("***********ID: " + res)
     return res[0].id
     } finally {
         connection.end();
     }
+};
 
-}
+async function getFranchiseId(franchiseName) {
+    const connection = await DB.getConnection()
+    
+    const sql = "SELECT id FROM franchise WHERE name=?"
+    let res = await DB.query(connection, sql, [franchiseName])
+    return res[0].id
+    
+};
+
+
 
 async function createAdminUser() {
   let user = { password: 'toomanysecrets', roles: [{ role: Role.Admin }]  }; //roles: [{ role: Role.Admin }] 
@@ -39,7 +48,6 @@ async function createAdminUser() {
 }
 
 async function createFranchise(franchiseName, auth, testUser) {
-    
     const newFranchise = {
         name: franchiseName,
         admins: [{ email: testUser.email}]
@@ -56,7 +64,6 @@ async function createFranchise(franchiseName, auth, testUser) {
 
 
 test('create franchise', async () => {
-
     let testUser = await createAdminUser()
 
     const loginRes = await request(app).put('/api/auth').send(testUser);
@@ -117,5 +124,32 @@ test("get user's franchises", async ()=> {
     expect(deleteFran1Res.status).toBe(200)
     expect(deleteFran2Res.status).toBe(200)
     expect(deleteFran3Res.status).toBe(200)
-    
 });
+
+test('create store', async ()=> {
+    const testUser = await createAdminUser()
+    const loginRes = await request(app).put('/api/auth').send(testUser);
+    expect(loginRes.status).toBe(200);
+    const authToken = loginRes.body.token; 
+
+    const franchise = await createFranchise("storeTest", authToken, testUser)
+    const franchiseId = await getFranchiseId("storeTest")
+    const storeName = "createStoreTest"
+
+    const url = '/api/franchise/' + franchiseId + "/store"
+
+    const store = {
+        "franchiseId" : franchiseId,
+        "name" : storeName
+    }
+
+    const createStoreRes = await request(app)
+    .post(url)
+    .send(store)
+    .set('Authorization', `Bearer ${authToken}`)
+
+    expect(createStoreRes.status).toBe(200)
+
+    
+
+})
