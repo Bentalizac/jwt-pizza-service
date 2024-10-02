@@ -15,7 +15,7 @@ async function clearDB() {
 
 beforeAll(async () => {
 
-  clearDB()
+  //clearDB()
 
   testUser.email = Math.random().toString(36).substring(2, 12) + '@test.com';
   const registerRes = await request(app).post('/api/auth').send(testUser);

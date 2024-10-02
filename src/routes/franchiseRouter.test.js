@@ -28,7 +28,7 @@ async function createAdminUser() {
 
 
 beforeAll(async ()=>{
-    await clearDB()
+    //await clearDB()
     testUser = await createAdminUser()
 })
 
