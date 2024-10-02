@@ -3,7 +3,7 @@ const app = require('../service');
 
 
 const { Role, DB } = require('../database/database.js');
-let testUser =  {}
+
 
 //async function clearDB() {
 //    const connection = await DB.getConnection()
@@ -13,8 +13,21 @@ let testUser =  {}
 //}
 
 function randomName() {
-    return Math.random().toString(36).substring(2, 6);
+    return Math.random().toString(36).substring(2, 9);
   };
+
+async function getUserId(user) {
+    const connection = await DB.getConnection()
+    try {
+    const sql = "SELECT id FROM user WHERE email=?"
+    let res = await DB.query(connection, sql, [user.email])
+    console.log("***********ID: " + res)
+    return res[0].id
+    } finally {
+        connection.end();
+    }
+
+}
 
 async function createAdminUser() {
   let user = { password: 'toomanysecrets', roles: [{ role: Role.Admin }]  }; //roles: [{ role: Role.Admin }] 
@@ -25,37 +38,84 @@ async function createAdminUser() {
   return user;
 }
 
+async function createFranchise(franchiseName, auth, testUser) {
+    
+    const newFranchise = {
+        name: franchiseName,
+        admins: [{ email: testUser.email}]
+      };
 
+      const createFranchiseRes = await request(app)
+      .post('/api/franchise')
+      .set('Authorization', `Bearer ${auth}`)
+      .send(newFranchise);
 
-beforeAll(async ()=>{
-    //await clearDB()
-    testUser = await createAdminUser()
-})
+    //expect(createFranchiseRes.status).toBe(200);
+    return createFranchiseRes
+}
+
 
 test('create franchise', async () => {
+
+    let testUser = await createAdminUser()
+
     const loginRes = await request(app).put('/api/auth').send(testUser);
     expect(loginRes.status).toBe(200);
     const authToken = loginRes.body.token;
 
-    const newFranchise = {
-      name: 'pizzaPocket',
-      admins: [{ email: testUser.email}]
-    };
+    const name = "single franchise test"
+    const response = await createFranchise(name, authToken, testUser)
+    expect(response.status).toBe(200);
   
-    const createFranchiseRes = await request(app)
-      .post('/api/franchise')
-      .set('Authorization', `Bearer ${authToken}`)
-      .send(newFranchise);
-    
-    expect(createFranchiseRes.status).toBe(200);
-  
-    expect(createFranchiseRes.body).toMatchObject({
-      name: 'pizzaPocket',
+    expect(response.body).toMatchObject({
+      name: name,
       admins: [{ email: testUser.email, id: expect.any(Number), name: expect.any(String) }],
       id: expect.any(Number),
     });
 
-    const deleteFranRes = await request(app).delete('/api/franchise/' + createFranchiseRes.body.id)
+    const deleteFranRes = await request(app).delete('/api/franchise/' + response.body.id)
         .set('Authorization', `Bearer ${authToken}`)
     expect(deleteFranRes.status).toBe(200)
   });
+
+test("get user's franchises", async ()=> {
+    // Setup three franchises owned by the same user
+    const testUser = await createAdminUser()
+
+    const names = ['f1', 'f2', 'f3']
+    const loginRes = await request(app).put('/api/auth').send(testUser);
+    expect(loginRes.status).toBe(200);
+
+    const authToken = loginRes.body.token;    
+    const responses = [
+        await createFranchise(names[0], authToken, testUser),
+        await createFranchise(names[1], authToken, testUser),
+        await createFranchise(names[2], authToken, testUser),
+    ]
+    let userid = await getUserId(testUser)
+    console.log(userid)
+    expect(responses[0].status).toBe(200)
+    expect(responses[1].status).toBe(200)
+    expect(responses[2].status).toBe(200)
+    
+    const url = '/api/franchise/' + userid
+    const getUserFranRes = await request(app).get(url)
+    .set('Authorization', `Bearer ${authToken}`);
+
+    expect(getUserFranRes.status).toBe(200)
+
+    //Cleanup all three franchises
+    const deleteFran1Res = await request(app).delete('/api/franchise/' + responses[0].body.id)
+        .set('Authorization', `Bearer ${authToken}`)
+        
+    const deleteFran2Res = await request(app).delete('/api/franchise/' + responses[1].body.id)
+        .set('Authorization', `Bearer ${authToken}`)
+
+    const deleteFran3Res = await request(app).delete('/api/franchise/' + responses[2].body.id)
+        .set('Authorization', `Bearer ${authToken}`)
+    
+    expect(deleteFran1Res.status).toBe(200)
+    expect(deleteFran2Res.status).toBe(200)
+    expect(deleteFran3Res.status).toBe(200)
+    
+});

@@ -24,7 +24,6 @@ beforeAll(async () => {
 
 
 test('login', async () => {
-    console.log(testUser)
   const loginRes = await request(app).put('/api/auth').send(testUser);
   expect(loginRes.status).toBe(200);
 
@@ -36,3 +35,10 @@ test('login', async () => {
 
 });
 
+test('register', async ()=>{
+  let testUse = { name: 'pizza diner', email: Math.random().toString(36).substring(2, 12) + '@test.com' }
+  const registerRes = await request(app).post('/api/auth').send(testUse);
+  testUserAuthToken = registerRes.body.token;
+
+  expect(registerRes.status).toBe(400)
+})
