@@ -18,22 +18,23 @@ function randomName() {
 
 async function getUserId(user) {
     const connection = await DB.getConnection()
-    try {
     const sql = "SELECT id FROM user WHERE email=?"
     let res = await DB.query(connection, sql, [user.email])
     return res[0].id
-    } finally {
-        connection.end();
-    }
 };
 
 async function getFranchiseId(franchiseName) {
     const connection = await DB.getConnection()
-    
     const sql = "SELECT id FROM franchise WHERE name=?"
     let res = await DB.query(connection, sql, [franchiseName])
     return res[0].id
-    
+};
+
+async function getStoreId(storeName) {
+    const connection = await DB.getConnection()
+    const sql = "SELECT id FROM store WHERE name=?"
+    let res = await DB.query(connection, sql, [storeName])
+    return res[0].id
 };
 
 
@@ -126,30 +127,39 @@ test("get user's franchises", async ()=> {
     expect(deleteFran3Res.status).toBe(200)
 });
 
+async function createStore(authToken,testUser, storeName) {
+    await createFranchise("storeTest", authToken, testUser)
+    const franchiseId = await getFranchiseId("storeTest")
+    const url = '/api/franchise/' + franchiseId + "/store"
+    const store = {
+        "franchiseId" : franchiseId,
+        "name" : storeName
+    }
+    const createStoreRes = await request(app)
+        .post(url)
+        .send(store)
+        .set('Authorization', `Bearer ${authToken}`)
+    return createStoreRes
+}
+
 test('create store', async ()=> {
+
     const testUser = await createAdminUser()
     const loginRes = await request(app).put('/api/auth').send(testUser);
     expect(loginRes.status).toBe(200);
     const authToken = loginRes.body.token; 
 
-    const franchise = await createFranchise("storeTest", authToken, testUser)
-    const franchiseId = await getFranchiseId("storeTest")
     const storeName = "createStoreTest"
 
-    const url = '/api/franchise/' + franchiseId + "/store"
+    const res = await createStore(authToken, testUser, storeName)
+    expect(res.status).toBe(200)
 
-    const store = {
-        "franchiseId" : franchiseId,
-        "name" : storeName
-    }
+    const franchiseId = await getFranchiseId("storeTest")
+    const storeId = getStoreId(storeName)
+    const delUrl = '/api/franchise/' + franchiseId + '/store/' + storeId
+    const deleteStoreRes = await request(app)
+        .delete(delUrl)
+        .set('Authorization', `Bearer ${authToken}`)
 
-    const createStoreRes = await request(app)
-    .post(url)
-    .send(store)
-    .set('Authorization', `Bearer ${authToken}`)
-
-    expect(createStoreRes.status).toBe(200)
-
-    
-
+    expect(deleteStoreRes.status).toBe(200)
 })
