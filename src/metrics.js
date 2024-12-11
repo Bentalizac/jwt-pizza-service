@@ -22,7 +22,7 @@ class Metrics {
         this.getSystemMetrics()
         this.buildRequestMetrics()
         this.getAuthMetrics()
-        console.log(this.metricsBuffer)
+        //console.log(this.metricsBuffer)
         this.sendMetric(this.metricsBuffer)
         this.clearBuffer()
     } catch (error) {
