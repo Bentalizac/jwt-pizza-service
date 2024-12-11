@@ -1,4 +1,4 @@
-const e = require('express');
+require('express');
 const config = require('./config.js');
 const os = require('os');
 
@@ -18,7 +18,6 @@ class Metrics {
     this.counts["FailedAuth"] = 0
     this.counts["SuccessfullAuth"] = 0
     const timer = setInterval(() => {
-
       try {
         this.getSystemMetrics()
         this.buildRequestMetrics()
@@ -26,12 +25,12 @@ class Metrics {
         console.log(this.metricsBuffer)
         this.sendMetric(this.metricsBuffer)
         this.clearBuffer()
-
     } catch (error) {
         console.log('Error sending metrics', error);
       }
     }, 5000);
     timer.unref();
+    console.log(timer.hasRef)
   }
 
 
@@ -60,7 +59,7 @@ class Metrics {
 
     res.on('finish', () => {
 
-      const { method, originalUrl } = req
+      const { method } = req
       const statusCode = req.res.statusCode
       if(Math.floor(statusCode / 100) == 2) {
         if(method == "PUT" || method == "POST") {
@@ -86,7 +85,6 @@ class Metrics {
     res.on('finish', () => {
       const duration = Date.now() - startTime;
       const { method, originalUrl } = req;
-      const statusCode = res.statusCode;
 
       if (method === 'POST') {
         const orderedItems = req.body.items
