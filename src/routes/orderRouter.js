@@ -6,6 +6,8 @@ const { asyncHandler, StatusCodeError } = require('../endpointHelper.js');
 
 const orderRouter = express.Router();
 
+const metrics = require("../metrics.js")
+
 orderRouter.endpoints = [
   {
     method: 'GET',
@@ -75,20 +77,24 @@ orderRouter.get(
 // createOrder
 orderRouter.post(
   '/',
+  metrics.orderMetrics.bind(metrics), // Attach the metrics middleware
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
     const orderReq = req.body;
     const order = await DB.addDinerOrder(req.user, orderReq);
+
+    const startTime = Date.now();
     const r = await fetch(`${config.factory.url}/api/order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', authorization: `Bearer ${config.factory.apiKey}` },
       body: JSON.stringify({ diner: { id: req.user.id, name: req.user.name, email: req.user.email }, order }),
     });
-    const j = await r.json();
+    const responseBody = await r.json();
+
     if (r.ok) {
-      res.send({ order, jwt: j.jwt, reportUrl: j.reportUrl });
+      res.send({ order, jwt: responseBody.jwt, reportUrl: responseBody.reportUrl });
     } else {
-      res.status(500).send({ message: 'Failed to fulfill order at factory', reportUrl: j.reportUrl });
+      res.status(500).send({ message: 'Failed to fulfill order at factory', reportUrl: responseBody.reportUrl });
     }
   })
 );
